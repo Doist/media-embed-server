@@ -47,7 +47,7 @@ app.get('/parse', (req, res) ->
                             async_cb(null, obj)
                         else
                             result = {'error': 'Could not resolve resource'}
-                            resource.matched_url = url
+                            result.matched_url = url
                             async_cb(null, result)
                     , timeout)
             )
