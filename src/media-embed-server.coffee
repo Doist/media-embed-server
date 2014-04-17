@@ -58,6 +58,16 @@ app.get('/parse', (req, res) ->
 )
 
 
+# --- Providers
+app.get('/providers', (req, res) ->
+    if !app.providers
+        app.providers = media_parser.MediaServices.getProviders()
+
+    res.set({'Content-Type': 'application/json'})
+    res.send(app.providers)
+)
+
+
 # --- Command line setup
 usage = "A specialized API for handling oemebed requests"
 
