@@ -3,6 +3,7 @@ async = require('async')
 program = require('commander')
 partial = require('partial')
 media_parser = require('media-parser')
+Memcached = require('memcached')
 
 app = express()
 
@@ -11,19 +12,16 @@ app = express()
 app.get('/parse', (req, res) ->
     # Setup query arguments
     timeout = parseInt(req.query.timeout or 5) * 1000
-    urls = req.query.urls or "[]"
+    content = req.query.content or ""
     min_tn_size = parseInt(req.query.min_tn_size or 100)
     callback = req.query.callback or null
 
-    try
-        urls = JSON.parse(urls)
-    catch e
-        return res.send(500, 'Invalid JSON encoding of urls')
-
     # Process the requests in parallel
     cb_functions = []
-    for _url in urls
+    for _url in media_parser.MediaParser.extractURLs(content)
         cb = (url, async_cb) ->
+            cache_key = _url + ':' + min_tn_size
+
             media_parser.parse(url, (obj) ->
                 if obj
                     if obj.get_thumbnail_url
@@ -37,16 +35,14 @@ app.get('/parse', (req, res) ->
                     result = obj
                 else
                     result = {'error': 'Could not resolve resource'}
-                async_cb(null, [url, result])
+
+                result.matched_url = url
+                async_cb(null, result)
             , timeout)
         cb_functions.push(partial(cb, _url))
 
     async.parallel(cb_functions, (err, cb_results) ->
-        results = {}
-        for rpair in cb_results
-            results[rpair[0]] = rpair[1]
-
-        json = JSON.stringify(results)
+        json = JSON.stringify(cb_results)
 
         if callback
             res.set({'Content-Type': 'text/javascript'})
@@ -60,11 +56,8 @@ app.get('/parse', (req, res) ->
 
 # --- Providers
 app.get('/providers', (req, res) ->
-    if !app.providers
-        app.providers = media_parser.MediaServices.getProviders()
-
     res.set({'Content-Type': 'application/json'})
-    res.send(app.providers)
+    res.send(media_parser.MediaServices.getProviders())
 )
 
 
@@ -75,12 +68,17 @@ program
   .version('0.0.1')
   .usage(usage)
   .option('-p, --port <port>')
+  .option('-c, --cache <cache>')
   .parse(process.argv)
 
 program.port = parseInt(program.port or '8080')
+program.cache = program.cache or null
 
+# --- Init
 media_parser.MediaParser.init(media_parser.NodeHttpService)
+if program.cache
+    app.cache = new Memcached(program.cache)
 
+# --- Start
 app.listen(program.port)
-
 console.log('Started Media Server on ' + program.port)
