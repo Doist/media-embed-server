@@ -1,16 +1,17 @@
 {
-    "name":         "media-server",
+    "name":         "media-embed-server",
     "description":  "Node oEmbed proxy that supports a few other non-oEmbed services and JSONP",
     "keywords":     ["oembed", "media", "proxy", "thumbnails"],
     "author":       "amix",
     "version":      "1.0.0",
-    "repository": "https://github.com/Doist/media-server",
+    "repository": "https://github.com/Doist/media-embed-server",
     "licenses": [{
         "type":       "MIT",
         "url":        "http://opensource.org/licenses/mit-license.php"
     }],
 
     "dependencies": {
+        "media-parser": "1.0.0",
         "express": "4.0.0",
         "commander": ">=0.6.0",
         "async": ">=0.7.0",
@@ -27,10 +28,10 @@
         "lib" :       "./lib"
     },
 
-    "main" :        "./lib/media-server",
+    "main" :        "./lib/media-embed-server",
 
     "bin": {
-        "media-server":      "./bin/media-server"
+        "media-embed-server":      "./bin/media-embed-server"
     }
 
 }
