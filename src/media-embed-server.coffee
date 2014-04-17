@@ -22,23 +22,36 @@ app.get('/parse', (req, res) ->
         cb = (url, async_cb) ->
             cache_key = _url + ':' + min_tn_size
 
-            media_parser.parse(url, (obj) ->
-                if obj
-                    if obj.get_thumbnail_url
-                        thumb_info = obj.get_thumbnail_url(min_tn_size)
-                        delete obj.get_thumbnail_url
-                        if thumb_info
-                            obj.thumbnail_url = thumb_info[0]
-                            obj.thumbnail_width = thumb_info[1]
-                            obj.thumbnail_height = thumb_info[2]
+            app.cache.get(cache_key, (err, cached_data) ->
+                if cached_data
+                    try
+                        cached_data = JSON.parse(cached_data)
+                    catch e
+                        cached_data = null
 
-                    result = obj
+                if cached_data
+                    async_cb(null, cached_data)
                 else
-                    result = {'error': 'Could not resolve resource'}
+                    media_parser.parse(url, (obj) ->
+                        if obj
+                            if obj.get_thumbnail_url
+                                thumb_info = obj.get_thumbnail_url(min_tn_size)
+                                delete obj.get_thumbnail_url
+                                if thumb_info
+                                    obj.thumbnail_url = thumb_info[0]
+                                    obj.thumbnail_width = thumb_info[1]
+                                    obj.thumbnail_height = thumb_info[2]
 
-                result.matched_url = url
-                async_cb(null, result)
-            , timeout)
+                            obj.matched_url = url
+                            app.cache.set(cache_key, JSON.stringify(obj), 3600)
+                            async_cb(null, obj)
+                        else
+                            result = {'error': 'Could not resolve resource'}
+                            resource.matched_url = url
+                            async_cb(null, result)
+                    , timeout)
+            )
+
         cb_functions.push(partial(cb, _url))
 
     async.parallel(cb_functions, (err, cb_results) ->
@@ -77,7 +90,12 @@ program.cache = program.cache or null
 # --- Init
 media_parser.MediaParser.init(media_parser.NodeHttpService)
 if program.cache
-    app.cache = new Memcached(program.cache)
+    app.cache = new Memcached(program.cache, {'timeout': 500, 'failures': 1})
+else
+    app.cache = {
+        get: (key, cb) -> cb()
+        set: -> null
+    }
 
 # --- Start
 app.listen(program.port)
