@@ -1,7 +1,9 @@
-# Embed media easily (oEmbed and others)
+# Embed media easily
 media-embed-server is a node server that can parse content, extract links and return info about them. Info can be title, thumbnails, direct links etc. (depends on the service)
 
-It depends on [media-parser](https://github.com/Doist/media-parser).
+For some services it uses oEmbed, for others it uses other APIs.
+
+It depends heavily on [media-parser](https://github.com/Doist/media-parser).
 
 
 ## Features
