@@ -18,7 +18,7 @@ app.get('/parse', (req, res) ->
 
     # Process the requests in parallel
     cb_functions = []
-    for _url in media_parser.MediaParser.extractURLs(content)
+    for _url in media_parser.extractURLs(content)
         cb = (url, async_cb) ->
             cache_key = _url + ':' + min_tn_size
 
@@ -70,7 +70,7 @@ app.get('/parse', (req, res) ->
 # --- Providers
 app.get('/providers', (req, res) ->
     res.set({'Content-Type': 'application/json'})
-    res.send(media_parser.MediaServices.getProviders())
+    res.send(media_parser.getProviders())
 )
 
 
@@ -88,7 +88,6 @@ program.port = parseInt(program.port or '8080')
 program.cache = program.cache or null
 
 # --- Init
-media_parser.MediaParser.init(media_parser.NodeHttpService)
 if program.cache
     app.cache = new Memcached(program.cache, {'timeout': 500, 'failures': 1})
 else
