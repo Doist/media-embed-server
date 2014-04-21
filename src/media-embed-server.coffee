@@ -3,9 +3,12 @@ async = require('async')
 program = require('commander')
 partial = require('partial')
 media_parser = require('media-parser')
+webpage_info = require('webpage-info')
 Memcached = require('memcached')
 
 app = express()
+
+app.unknown_error = {'error': 'Could not resolve resource'}
 
 
 # --- Parse
@@ -18,7 +21,7 @@ app.get('/parse', (req, res) ->
 
     # Process the requests in parallel
     cb_functions = []
-    for _url in media_parser.extractURLs(content)
+    for _url in media_parser.allURLs(content)
         cb = (url, async_cb) ->
             cache_key = _url + ':' + min_tn_size
 
@@ -46,9 +49,17 @@ app.get('/parse', (req, res) ->
                             app.cache.set(cache_key, JSON.stringify(obj), 3600)
                             async_cb(null, obj)
                         else
-                            result = {'error': 'Could not resolve resource'}
-                            result.matched_url = url
-                            async_cb(null, result)
+                            webpage_info.parse(url, (page_info) ->
+                                if page_info.error
+                                    result = app.unknown_error
+                                    result.matched_url = url
+                                else
+                                    result = page_info
+                                    result.matched_url = url
+                                    app.cache.set(cache_key, JSON.stringify(result), 3600)
+
+                                async_cb(null, result)
+                            )
                     , timeout)
             )
 

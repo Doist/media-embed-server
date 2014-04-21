@@ -3,7 +3,7 @@
     "description":  "Node oEmbed proxy that supports a few other non-oEmbed services and JSONP",
     "keywords":     ["oembed", "media", "proxy", "thumbnails"],
     "author":       "amix",
-    "version":      "1.4.2",
+    "version":      "1.4.3",
     "repository": "https://github.com/Doist/media-embed-server",
     "licenses": [{
         "type":       "MIT",
@@ -11,7 +11,8 @@
     }],
 
     "dependencies": {
-        "media-parser": "1.4.0",
+        "media-parser": "1.4.2",
+        "webpage-info": "0.0.1",
         "express": "4.0.0",
         "commander": ">=0.6.0",
         "async": ">=0.7.0",
