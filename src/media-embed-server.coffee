@@ -69,11 +69,11 @@ app.get('/parse', (req, res) ->
         json = JSON.stringify(cb_results)
 
         if callback
-            res.set({'Content-Type': 'text/javascript'})
-            res.send(callback + "(" + json + ")")
+            res.set({'Content-Type': 'text/javascript; charset=utf-8'})
+            res.send(callback + "(" + json.toString('utf8') + ")")
         else
-            res.set({'Content-Type': 'application/json'})
-            res.send(json)
+            res.set({'Content-Type': 'application/json; charset=utf-8'})
+            res.send(json.toString('utf8'))
     )
 )
 
