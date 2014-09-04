@@ -12,7 +12,7 @@
 
     "dependencies": {
         "media-parser": "1.4.5",
-        "webpage-info": "0.0.5",
+        "webpage-info": "0.0.6",
         "express": "4.0.0",
         "commander": ">=0.6.0",
         "async": ">=0.7.0",
