@@ -5,7 +5,7 @@ For some services it uses oEmbed, for others it uses other APIs.
 
 It depends heavily on [media-parser](https://github.com/Doist/media-parser).
 
-
+pars
 ## Features
 * Non-blocking parallel fetching of data
 * Unified API for a lot of services
@@ -45,7 +45,7 @@ Optional arguments:
     
 An example of a parse request:
 
-    http://localhost:8080/parse?content=This+is+a+test+https://www.youtube.com/watch?v=lYHzdqGR9-U&min_tn_size=100
+    http://localhost:8080/parseContent?content=This+is+a+test+https://www.youtube.com/watch?v=lYHzdqGR9-U&min_tn_size=100
 
 ### Successful return:
 
@@ -87,7 +87,7 @@ Always present:
 Can be present:
 * **error**: Something went wrong
 * **description**: The description of the URL
-* **thumbnail**: The thumbnail information. Will be a dictionary that includes `url`, `width` and `height`
+* **thumbnail**: The thumbnail information. Will be an object that includes `url`, `width` and `height`
 * **html**: oEmbed HTML (in most cases it will be an iFrame)
 
 
