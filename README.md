@@ -32,7 +32,7 @@ An example:
 
 # API endpoints
 
-## /parse
+## /parseContent
 Required arguments:
 * **content**: Content to extract media information from.
 
@@ -48,31 +48,48 @@ An example of a parse request:
     http://localhost:8080/parse?content=This+is+a+test+https://www.youtube.com/watch?v=lYHzdqGR9-U&min_tn_size=100
 
 ### Successful return:
+
 A JSON list of matched URLs and information attached to the URL. Example:
 
     [
         {
-            "matched_url": "https://www.youtube.com/watch?v=lYHzdqGR9-U",
+            "url": "https://www.youtube.com/watch?v=lYHzdqGR9-U",
             "title": "[프로리그2014] 정우용(CJ) vs 김유진(진에어) 2세트 해비테이션...",
-            "thumbnail_width": 100,
-            "thumbnail_height": 100,
-            "thumbnail_url": "...",
-            "raw": {
-                ... RAW oemebed data ...
-            }
+            "thumbnail": {
+                "url": "...",
+                "width": 100,
+                "height": 100
+            },
+            "html": "..."
         }
     ]
         
 ### Error Return
 The errors are returned in the result dict as special JSON objects that have an error attribute. 
+
 Example:
 
     [
         {
-            "matched_url": "https://www.youtube.com/watch?v=lYHzdqGR9-U",
+            "url": "https://www.youtube.com/watch?v=lYHzdqGR9-U",
             "error": "Service timeout"
         }
     ] 
+
+
+## Result specification
+
+Always present:
+* **url**: The URL of the resource
+* **title**: The title of the resource
+* **type**: The type of the resource, can be `website`, `image`, `video` or `audio`
+
+Can be present:
+* **error**: Something went wrong
+* **description**: The description of the URL
+* **thumbnail**: The thumbnail information. Will be a dictionary that includes `url`, `width` and `height`
+* **html**: oEmbed HTML (in most cases it will be an iFrame)
+
 
 ## /providers
 Returns a list of providers that are supported, including a regular expressions that matches all the services that media-embed-server supports. If you store this regular expression locally you can answer locally if a service is supported or not.

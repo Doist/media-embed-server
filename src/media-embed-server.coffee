@@ -1,19 +1,20 @@
+http = require('http')
 express = require('express')
 async = require('async')
 program = require('commander')
 partial = require('partial')
 media_parser = require('media-parser')
 webpage_info = require('webpage-info')
+imagesize = require('imagesize')
 Memcached = require('memcached')
 
 app = express()
 
-app.unknown_error = {'error': 'Could not resolve resource'}
-
 
 # --- Parse
-app.get('/parse', (req, res) ->
+parse = (req, res) ->
     # Setup query arguments
+    version = parseInt(req.query.version or 1)
     timeout = parseInt(req.query.timeout or 5) * 1000
     content = req.query.content or ""
     min_tn_size = parseInt(req.query.min_tn_size or 100)
@@ -35,30 +36,58 @@ app.get('/parse', (req, res) ->
                 if cached_data
                     async_cb(null, cached_data)
                 else
-                    media_parser.parse(url, (obj) ->
-                        if obj
-                            if obj.get_thumbnail_url
-                                thumb_info = obj.get_thumbnail_url(min_tn_size)
-                                delete obj.get_thumbnail_url
+                    media_parser.parse(url, (parsed_obj) ->
+                        if parsed_obj
+                            result = {}
+
+                            if parsed_obj.underlying_type
+                                result.type = parsed_obj.underlying_type
+                            else
+                                attachType(version, result, url)
+
+                            attachTitle(version, result, parsed_obj.title, url)
+                            attachUrl(version, result, url)
+
+                            if parsed_obj.raw and parsed_obj.raw.html
+                                result.html = parsed_obj.raw.html
+
+                            if parsed_obj.content_url and parsed_obj.content_type
+                                result.content_url = parsed_obj.content_url
+                                result.content_type = parsed_obj.content_type
+
+                            if parsed_obj.get_thumbnail_url
+                                thumb_info = parsed_obj.get_thumbnail_url(min_tn_size)
+
                                 if thumb_info
-                                    obj.thumbnail_url = thumb_info[0]
-                                    obj.thumbnail_width = thumb_info[1]
-                                    obj.thumbnail_height = thumb_info[2]
+                                    attachThumbnail(version, result, thumb_info)
 
-                            obj.matched_url = url
-                            app.cache.set(cache_key, JSON.stringify(obj), 3600)
-                            async_cb(null, obj)
+                            update_cache = true
+
+                            handleAsyncCall(async_cb, cache_key, update_cache, result, timeout)
                         else
-                            webpage_info.parse(url, (page_info) ->
-                                if page_info.error
-                                    result = app.unknown_error
-                                    result.matched_url = url
+                            webpage_info.parse(url, (parsed_obj) ->
+                                if parsed_obj.error or !parsed_obj.title
+                                    result = {'error': 'Could not resolve resource'}
+                                    update_cache = false
                                 else
-                                    result = page_info
-                                    result.matched_url = url
-                                    app.cache.set(cache_key, JSON.stringify(result), 3600)
+                                    result = {}
 
-                                async_cb(null, result)
+                                    update_cache = true
+
+                                    attachType(version, result, url)
+
+                                    attachTitle(version, result, parsed_obj.title, url)
+
+                                    if parsed_obj.thumbnail
+                                        result.thumbnail = {
+                                            "url": parsed_obj.thumbnail.url
+                                            "width": parsed_obj.thumbnail.width
+                                            "height": parsed_obj.thumbnail.height
+                                        }
+
+                                attachUrl(version, result, url)
+
+                                handleAsyncCall(async_cb, cache_key, update_cache, result, timeout)
                             )
                     , timeout)
             )
@@ -75,7 +104,81 @@ app.get('/parse', (req, res) ->
             res.set({'Content-Type': 'application/json; charset=utf-8'})
             res.send(json.toString('utf8'))
     )
+
+
+handleAsyncCall = (async_cb, cache_key, update_cache, result, timeout) ->
+    callback = ->
+        if update_cache
+            app.cache.set(cache_key, JSON.stringify(result), 3600*24)
+        async_cb(null, result)
+
+    # --- Clean up thumbnail info
+    thumbnail = result.thumbnail
+
+    if thumbnail and thumbnail.width
+        thumbnail.width = parseInt(thumbnail.width)
+
+    if thumbnail and thumbnail.height
+        thumbnail.height = parseInt(thumbnail.height)
+
+    if thumbnail and thumbnail.url and (!thumbnail.width or !thumbnail.height)
+        turl = thumbnail.url.replace('https', 'http')
+        request = http.get(turl, (response) ->
+            imagesize(response, (err, image_result) ->
+                if image_result and image_result.width and image_result.height
+                    result.thumbnail.width = image_result.width
+                    result.thumbnail.height = image_result.height
+                else if result.thumbnail
+                    delete result.thumbnail
+
+                callback()
+
+                request.abort()
+            )
+        )
+    else
+        callback()
+
+
+
+# New v2 handler
+app.get('/parseContent', (req, res) ->
+    req.query.version = 2
+    parse(req, res)
 )
+
+# Legacy support
+app.get('/parse', parse)
+
+
+# --- Expose functions
+attachTitle = (version, result, title, url) ->
+    if title and title.length > 0
+        result.title = title
+    else
+        result.title = url
+
+attachUrl = (version, result, url) ->
+    if version == 1
+        result.matched_url = url
+    else
+        result.url = url
+
+attachType = (version, result, url) ->
+    result.type = "website"
+
+
+attachThumbnail = (version, result, thumb_info) ->
+    if version == 1
+        result.thumbnail_url = thumb_info[0]
+        result.thumbnail_width = thumb_info[1]
+        result.thumbnail_height = thumb_info[2]
+    else
+        result.thumbnail = {
+            "url": thumb_info[0],
+            "width": thumb_info[1],
+            "height": thumb_info[2]
+        }
 
 
 # --- Providers
@@ -89,7 +192,7 @@ app.get('/providers', (req, res) ->
 usage = "A specialized API for handling oemebed requests"
 
 program
-  .version('0.0.1')
+  .version('2.0.0')
   .usage(usage)
   .option('-p, --port <port>')
   .option('-c, --cache <cache>')
