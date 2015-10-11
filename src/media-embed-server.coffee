@@ -188,6 +188,12 @@ app.get('/providers', (req, res) ->
 )
 
 
+# --- Handle error gracefully
+process.on('uncaughtException', (err)  ->
+    console.log(err)
+)
+
+
 # --- Command line setup
 usage = "A specialized API for handling oemebed requests"
 
