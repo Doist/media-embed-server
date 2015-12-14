@@ -5,7 +5,6 @@ program = require('commander')
 partial = require('partial')
 media_parser = require('media-parser')
 webpage_info = require('webpage-info')
-imagesize = require('imagesize')
 mime = require('mime-types')
 Memcached = require('memcached')
 
@@ -64,7 +63,7 @@ parse = (req, res) ->
 
                             update_cache = true
 
-                            handleAsyncCall(async_cb, cache_key, update_cache, result, timeout)
+                            handleAsyncCall(async_cb, cache_key, update_cache, result, timeout, version)
                         else
                             webpage_info.parse(url, (parsed_obj) ->
                                 if parsed_obj.error or !parsed_obj.title
@@ -84,7 +83,7 @@ parse = (req, res) ->
 
                                 attachUrl(version, result, url)
 
-                                handleAsyncCall(async_cb, cache_key, update_cache, result, timeout)
+                                handleAsyncCall(async_cb, cache_key, update_cache, result, timeout, version)
                             )
                     , timeout)
             )
@@ -103,39 +102,22 @@ parse = (req, res) ->
     )
 
 
-handleAsyncCall = (async_cb, cache_key, update_cache, result, timeout) ->
+handleAsyncCall = (async_cb, cache_key, update_cache, result, timeout, version) ->
     callback = ->
         if update_cache
             app.cache.set(cache_key, JSON.stringify(result), 3600*24)
         async_cb(null, result)
 
-    # --- Clean up thumbnail info
-    thumbnail = result.thumbnail
+    if version = 1
+        thumbnail = result.thumbnail
 
-    if thumbnail and thumbnail.width
-        thumbnail.width = parseInt(thumbnail.width)
+        if thumbnail and thumbnail.width
+            thumbnail.width = parseInt(thumbnail.width)
 
-    if thumbnail and thumbnail.height
-        thumbnail.height = parseInt(thumbnail.height)
+        if thumbnail and thumbnail.height
+            thumbnail.height = parseInt(thumbnail.height)
 
-    if thumbnail and thumbnail.url and (!thumbnail.width or !thumbnail.height)
-        turl = thumbnail.url.replace('https', 'http')
-        request = http.get(turl, (response) ->
-            imagesize(response, (err, image_result) ->
-                if image_result and image_result.width and image_result.height
-                    result.thumbnail.width = image_result.width
-                    result.thumbnail.height = image_result.height
-                else if result.thumbnail
-                    delete result.thumbnail
-
-                callback()
-
-                request.abort()
-            )
-        )
-    else
-        callback()
-
+    callback()
 
 
 # New v2 handler
