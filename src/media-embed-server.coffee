@@ -80,11 +80,7 @@ parse = (req, res) ->
                                     attachTitle(version, result, parsed_obj.title, url)
 
                                     if parsed_obj.thumbnail
-                                        result.thumbnail = {
-                                            "url": parsed_obj.thumbnail.url
-                                            "width": parsed_obj.thumbnail.width
-                                            "height": parsed_obj.thumbnail.height
-                                        }
+                                        result.thumbnail = parsed_obj.thumbnail
 
                                 attachUrl(version, result, url)
 
@@ -166,7 +162,7 @@ attachUrl = (version, result, url) ->
         result.url = url
 
 attachType = (version, result, url) ->
-    result.type = mime.lookup(url) or 'application/octet-stream'
+    result.type = mime.lookup(url) or 'text/html'
 
 
 attachThumbnail = (version, result, thumb_info) ->
@@ -175,11 +171,7 @@ attachThumbnail = (version, result, thumb_info) ->
         result.thumbnail_width = thumb_info[1]
         result.thumbnail_height = thumb_info[2]
     else
-        result.thumbnail = {
-            "url": thumb_info[0],
-            "width": thumb_info[1],
-            "height": thumb_info[2]
-        }
+        result.thumbnail = thumb_info[0]
 
 
 # --- Providers
