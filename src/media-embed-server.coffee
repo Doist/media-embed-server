@@ -6,6 +6,7 @@ partial = require('partial')
 media_parser = require('media-parser')
 webpage_info = require('webpage-info')
 imagesize = require('imagesize')
+mime = require('mime-types')
 Memcached = require('memcached')
 
 app = express()
@@ -165,7 +166,7 @@ attachUrl = (version, result, url) ->
         result.url = url
 
 attachType = (version, result, url) ->
-    result.type = "website"
+    result.type = mime.lookup(url) or 'application/octet-stream'
 
 
 attachThumbnail = (version, result, thumb_info) ->
