@@ -18,6 +18,7 @@ parse = (req, res) ->
     timeout = parseInt(req.query.timeout or 5) * 1000
     content = req.query.content or ""
     min_tn_size = parseInt(req.query.min_tn_size or 100)
+    max_matches = parseInt(req.query.max_matches or 3)
     callback = req.query.callback or null
 
     # Process the requests in parallel
@@ -89,6 +90,9 @@ parse = (req, res) ->
             )
 
         cb_functions.push(partial(cb, _url))
+
+        if cb_functions.length >= max_matches
+            break
 
     async.parallel(cb_functions, (err, cb_results) ->
         json = JSON.stringify(cb_results)
