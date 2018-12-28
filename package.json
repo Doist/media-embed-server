@@ -1,44 +1,39 @@
 {
-    "name":         "media-embed-server",
-    "description":  "Node oEmbed proxy that supports a few other non-oEmbed services and JSONP",
-    "keywords":     ["oembed", "media", "proxy", "thumbnails"],
-    "author":       "amix",
-    "version":      "2.2.2",
-    "repository":   "https://github.com/Doist/media-embed-server",
-    "licenses": [{
-        "type":       "MIT",
-        "url":        "http://opensource.org/licenses/mit-license.php"
-    }],
-
+    "name": "media-embed-server",
+    "description": "Node oEmbed proxy that supports a few other non-oEmbed services and JSONP",
+    "keywords": [
+        "oembed",
+        "media",
+        "proxy",
+        "thumbnails"
+    ],
+    "author": "amix",
+    "version": "2.2.2",
+    "repository": "https://github.com/Doist/media-embed-server",
+    "license": "MIT",
     "dependencies": {
-        "request": ">=2.34.0",
+        "async": ">=0.7.0",
+        "commander": ">=0.6.0",
+        "express": "^4.16.4",
         "imagesize": ">=1.0.0",
         "media-parser": ">=1.4.5",
-        "webpage-info": ">=0.1.5",
-        "express": "4.0.0",
-        "commander": ">=0.6.0",
-        "async": ">=0.7.0",
-        "partial": ">=0.0.3",
-        "memcached": ">=2.1.0",
-        "mime-types": ">=2.1.8"
+        "memcached": "^2.2.2",
+        "mime-types": "^2.1.21",
+        "partial": "0.0.7",
+        "request": ">=2.34.0",
+        "webpage-info": ">=0.1.5"
     },
-
     "engines": {
         "node": ">=0.2.0"
     },
-
     "directories": {
-        "lib" :       "./lib"
+        "lib": "./lib"
     },
-
-    "main" :        "./lib/media-embed-server",
-
+    "main": "./lib/media-embed-server",
     "bin": {
-        "media-embed-server":      "./bin/media-embed-server"
+        "media-embed-server": "./bin/media-embed-server"
     },
-
     "scripts": {
         "build": "coffee -c -o lib src"
     }
-
 }
