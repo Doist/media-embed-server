@@ -188,7 +188,7 @@ program.cache = program.cache or null
 
 # --- Init
 if program.cache
-    app.cache = new Memcached(program.cache, {'timeout': 500, 'failures': 1})
+    app.cache = new Memcached(program.cache, {'timeout': 100, 'failures': 1})
 else
     app.cache = {
         get: (key, cb) -> cb()
